@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            .arc text {
+                font: 10px sans-serif;
+                text-anchor: middle;
+            }
+
+            .arc path {
+                stroke: #fff;
+            }
+
+            .title {
+                fill: teal;
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <script src = "https://d3js.org/d3.v4.min.js"> </script>
+        <script src="d3.legend.js"></script>
+        <script>
+            
+            var margin = {top:100, right: 20, bottom:30, left:50},
+            width = 960 - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom;
+
+            var parseTime = d3.timeParse("%Y");
+
+            var x = d3.scaleTime().range([0,width]);
+            var y = d3.scaleLinear().range([height,0]);
+
+            var color = d3.scaleOrdinal(['#4daf4a']);            
+
+            var valueline = d3.line()
+                .x(function(d) { return x(d.year); })
+                .y(function(d) { return y(d.Men); });
+
+            var valueline2 = d3.line()
+                .x(function(d){ return x(d.year);})
+                .y(function(d){ return y(d.Women); });
+
+
+            var svg = d3.select("body").append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform",
+                    "translate(" + margin.left + "," + margin.top + ")");
+
+            
+            d3.csv("./data/admissions_data_lc.csv", function(error, data){
+                if (error) throw error;
+            
+                
+                data.forEach(function(d){
+                    d.year = parseTime(d.year);
+                    d.Men = +d.Men;
+                    d.Women = +d.Women;
+                });
+
+                x.domain(d3.extent(data, function(d) { return d.year; }));
+                y.domain([0, d3.max(data, function(d) {
+                    return Math.max(d.Men, d.Women); })]);
+                        
+                svg.append("path")
+                   .data([data])
+                   .attr("class", "line")
+                   .attr("fill", "none")
+                   .attr("stroke", function(d,i){ return color(i); })
+                   .attr("data-legend",function(d) { return d.name})
+                   .attr("d", valueline);
+
+                svg.append("path")
+                   .data([data])
+                   .attr("class", "line")
+                   .attr("fill", "none")
+                   .style("stroke", "red")
+                   .attr("data-legend",function(d) { return d.name})
+                   .attr("d", valueline2);
+
+                svg.append("g")
+                   .attr("transform", "translate(0," + height + ")")
+                   .call(d3.axisBottom(x));
+
+                svg.append("g").call(d3.axisLeft(y));
+
+                svg.append("text")
+                    .attr("x", (width / 2))             
+                    .attr("y", 0 - (margin.top / 2))
+                    .attr("text-anchor", "middle")  
+                    .style("font-size", "16px") 
+                    .style("text-decoration", "underline")  
+                    .text("Male vs Female enrollment at UCSD over a 14 year period ");
+
+                svg.append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 0 - margin.left)
+                    .attr("x",0 - (height / 2))
+                    .attr("dy", "1em")
+                    .style("text-anchor", "middle")
+                    .text("Count");   
+
+
+                svg.append("text").attr("x", 430).attr("y", 390).text("Year").style("font-size", "15px").attr("alignment-baseline","middle");
+
+                svg.append("circle").attr("cx",800).attr("cy",130).attr("r", 6).style("fill", "red");
+                svg.append("circle").attr("cx",800).attr("cy",160).attr("r", 6).style("fill", color(0));
+                svg.append("text").attr("x", 820).attr("y", 130).text("Women").style("font-size", "15px").attr("alignment-baseline","middle");
+                svg.append("text").attr("x", 820).attr("y", 160).text("Men").style("font-size", "15px").attr("alignment-baseline","middle");
+
+            });
+        </script>
+    </body>
+
+
+</html>

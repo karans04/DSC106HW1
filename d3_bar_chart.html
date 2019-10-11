@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+    <meta charset="utf-8">
+    <style>
+    
+    body {
+        font: 10px sans-serif;
+    }
+    
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: #000;
+        shape-rendering: crispEdges;
+    }
+
+    
+    </style>
+    <body>
+        <script src="https://d3js.org/d3.v3.min.js"></script>
+        
+        <script>
+            var margin = {top: 20, right: 20, bottom: 30, left: 40},
+                width = 960 - margin.left - margin.right,
+                height = 500 - margin.top - margin.bottom;
+
+
+            var parseDate = d3.time.format("%Y").parse;
+ 
+            var x =d3.scale.ordinal().rangeRoundBands([0,width], .05);
+           
+            var y = d3.scale.linear().range([height,0]);
+
+        
+            var xAxis = d3.svg.axis()
+                .scale(x)
+                .orient("bottom")
+                .tickFormat(d3.time.format("%Y"));
+
+            var yAxis = d3.svg.axis()
+                .scale(y)
+                .orient("left")
+                .ticks(10);
+
+                
+            var svg = d3.select("body").append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+            d3.csv("./data/admissions_data_bc.csv", function(error, data){
+                if (error) throw error;
+                
+                data.forEach(function(d){
+                    d.year = parseDate(d.year);
+                    d.Women = +d.Women;
+                });
+
+                x.domain(data.map( function(d) { return d.year; }));
+                y.domain([0, d3.max(data, function(d) {
+                    return d.Women; })]);
+
+                svg.selectAll("bar")
+                    .data(data)
+                    .enter().append("rect")
+                    .attr("class", "bar")
+                    .attr("x", function(d) { return x(d.year); })
+                    .attr("width", x.rangeBand())
+                    .attr("y", function(d) { return y(d.Women); })
+                    .attr("height", function(d) { return height - y(d.Women); });
+
+                svg.append("g")
+                    .attr("class", "x axis")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(xAxis)
+                    .selectAll("text")
+                    .style("text-anchor", "end")
+                    .attr("dx", "-.8em")
+                    .attr("dy", "-.55em")
+                    .attr("transform", "rotate(-90)" );
+
+                svg.append("g")
+                    .attr("class", "y axis")
+                    .call(yAxis)
+                    
+
+                svg.append("text")
+                    .attr("x", (width / 2))             
+                    .attr("y", 10 - (margin.top / 2))
+                    .attr("text-anchor", "middle")  
+                    .style("font-size", "16px") 
+                    .style("text-decoration", "underline")  
+                    .text("Percentage of Men Accepted at UCSD ");
+
+                svg.append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 0 - margin.left)
+                    .attr("x",0 - (height / 2))
+                    .attr("dy", "1em")
+                    .style("text-anchor", "middle")
+                    .text("Percentage");   
+
+                svg.append("text")             
+                    .attr("transform",
+                            "translate(" + (width/2) + " ," + 
+                                        (height + margin.top + 20) + ")")
+                    .attr("y", 0 - (margin.left /2)  )
+                    .attr("x",0 + (height / 2) - 240)
+                    .style("text-anchor", "middle")
+                    .text("Year");
+
+
+
+                
+            });
+
+        </script>
+    </body>
+</html> 
